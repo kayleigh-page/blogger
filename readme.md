@@ -62,3 +62,102 @@ mutation Verify($token: String!) {
   "token": "123456"
 }
 ```
+
+## Add a site
+### Query
+```
+mutation AddSite($name: String!, $url: String!) {
+  addSite(name: $name, url: $url) {
+    id
+    name
+    url
+  }
+}
+```
+### Query Variables
+```
+{
+  "name": "Kayleigh Page",
+  "url": "https://kayleigh.page"
+}
+```
+
+## List all sites for logged in user
+### Query
+```
+query {
+  getSites {
+    id
+    name
+    url
+  }
+}
+```
+
+## Get one site
+### Query
+```
+query GetSite($id: String!) {
+  getSite(id: $id) {
+    id
+    name
+    url
+  }
+}
+```
+### Query Variables
+```
+{
+  "id": "SITE_ID_HERE"
+}
+```
+
+## Update a site
+### Query
+```
+mutation UpdateSite(
+  $id: String!
+  $name: String
+  $url: String
+  $description: String
+  $picture: String
+) {
+  updateSite(
+    id: $id
+    name: $name
+    url: $url
+    description: $description
+    picture: $picture
+  ) {
+    id
+    name
+    url
+    description
+    picture
+  }
+}
+```
+### Query Variables
+```
+{
+  "id": "SITE_ID_HERE",
+  "name": "Updated Name",
+  "url": "https://updated-url.com",
+  "description": "A new description",
+  "picture": "https://example.com/image.jpg"
+}
+```
+
+## Delete a site
+### Query
+```
+mutation DeleteSite($id: String!) {
+  deleteSite(id: $id)
+}
+```
+### Query Variables
+```
+{
+  "id": "SITE_ID_HERE"
+}
+```

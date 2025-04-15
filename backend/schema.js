@@ -16,6 +16,7 @@ const QRCode = require("qrcode");
 const authMiddleware = require("./middleware/auth");
 
 const User = require("./models/User");
+const Site = require("./models/Site");
 
 
 
@@ -35,6 +36,19 @@ const UserType = new GraphQLObjectType({
   }),
 });
 
+// Site Type
+const SiteType = new GraphQLObjectType({
+  name: "Site",
+  fields: () => ({
+    id: { type: GraphQLString },
+    name: { type: GraphQLString },
+    url: { type: GraphQLString },
+    userId: { type: GraphQLString },
+    description: { type: GraphQLString },
+    picture: { type: GraphQLString },
+  }),
+});
+
 
 
 
@@ -51,6 +65,30 @@ const GetUserQuery = {
     if (!user) throw new Error("User not found");
 
     return user;
+  },
+};
+
+// Get Sites Query
+// This query retrieves all sites associated with the authenticated user.
+const GetSitesQuery = {
+  type: new GraphQLList(SiteType),
+  async resolve(_, __, req) {
+    const userId = authMiddleware(req);
+    const sites = await Site.find({ userId });
+    return sites;
+  },
+};
+// Get Site Query
+// This query retrieves a specific site by its ID.
+const GetSiteQuery = {
+  type: SiteType,
+  args: { id: { type: GraphQLString } },
+  async resolve(_, { id }, req) {
+    const userId = authMiddleware(req);
+    const site = await Site.findOne({ _id: id, userId });
+    if (!site) throw new Error("Site not found");
+
+    return site;
   },
 };
 
@@ -217,6 +255,60 @@ const Verify2FAMutation = {
   },
 };
 
+// Add Site Mutation
+// This mutation adds a new site for the authenticated user.
+const AddSiteMutation = {
+  type: SiteType,
+  args: {
+    name: { type: GraphQLString },
+    url: { type: GraphQLString },
+    /*description: { type: GraphQLString },
+    picture: { type: GraphQLString },*/
+  },
+  //async resolve(_, { name, url, description, picture }, req) {
+  async resolve(_, { name, url }, req) {
+    const userId = authMiddleware(req);
+    //const site = new Site({ name, url, description, picture, userId });
+    const site = new Site({ name, url, userId });
+    await site.save();
+    return site;
+  },
+};
+// Update Site Mutation
+// This mutation updates an existing site for the authenticated user.
+const UpdateSiteMutation = {
+  type: SiteType,
+  args: {
+    id: { type: GraphQLString },
+    name: { type: GraphQLString },
+    url: { type: GraphQLString },
+    description: { type: GraphQLString },
+    picture: { type: GraphQLString },
+  },
+  async resolve(_, { id, name, url, description, picture }, req) {
+    const userId = authMiddleware(req);
+    const site = await Site.findOneAndUpdate(
+      { _id: id, userId },
+      { name, url, description, picture },
+      { new: true }
+    );
+    if (!site) throw new Error("Site not found");
+    return site;
+  },
+};
+// Delete Site Mutation
+// This mutation deletes a site for the authenticated user.
+const DeleteSiteMutation = {
+  type: GraphQLBoolean,
+  args: { id: { type: GraphQLString } },
+  async resolve(_, { id }, req) {
+    const userId = authMiddleware(req);
+    const site = await Site.findOneAndDelete({ _id: id, userId });
+    if (!site) throw new Error("Site not found");
+    return true;
+  },
+};
+
 
 
 
@@ -228,6 +320,10 @@ const RootQuery = new GraphQLObjectType({
   fields: {
     // users
     getUser: GetUserQuery, // Private
+
+    // sites
+    getSites: GetSitesQuery, // Private
+    getSite: GetSiteQuery, // Private
   },
 });
 
@@ -239,6 +335,11 @@ const Mutation = new GraphQLObjectType({
     login: LoginMutation, // Public
     //setup2FA: Setup2FAMutation, // Private
     //verify2FA: Verify2FAMutation, // Private
+
+    // sites
+    addSite: AddSiteMutation, // Private
+    updateSite: UpdateSiteMutation, // Private
+    deleteSite: DeleteSiteMutation, // Private
   },
 });
 
