@@ -41,7 +41,9 @@ mutation Login($email: String!, $password: String!, $token: String) {
 ```
 
 ## Set up 2FA
-(Add authorization header first -> Key: Authorization Value: Bearer jwt-token-you-get-from-login-mutation)
+Add authorization header first:
+- Key: Authorization
+- Value: Bearer jwt-token-you-get-from-login-mutation
 ### Query
 ```
 mutation {
