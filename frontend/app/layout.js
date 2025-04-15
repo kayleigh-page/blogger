@@ -1,3 +1,5 @@
+import NavBar from "../components/NavBar";
+
 //import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 /*
@@ -23,9 +25,8 @@ export default function RootLayout({ children }) {
         <meta name="robots" content="noindex, nofollow" />
       </head>
       {/*className={`${geistSans.variable} ${geistMono.variable} antialiased`}*/}
-      <body
-        className={`antialiased`}
-      >
+      <body className={`antialiased`}>
+        <NavBar />
         {children}
       </body>
     </html>
