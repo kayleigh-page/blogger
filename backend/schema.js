@@ -23,6 +23,7 @@ const User = require("./models/User");
 /****************************************************************************************
  * GraphQL Types                                                                        *
  ****************************************************************************************/
+// User Type
 const UserType = new GraphQLObjectType({
   name: "User",
   fields: () => ({
@@ -40,6 +41,8 @@ const UserType = new GraphQLObjectType({
 /****************************************************************************************
  * GraphQL Queries                                                                      *
  ****************************************************************************************/
+// Get User Query
+// This query retrieves the authenticated user's information.
 const GetUserQuery = {
   type: UserType,
   async resolve(_, __, req) {
@@ -57,6 +60,9 @@ const GetUserQuery = {
 /****************************************************************************************
  * GraphQL Mutations                                                                    *
  ****************************************************************************************/
+// Register Mutation
+// This mutation allows a new user to register by providing an email and password.
+// It checks if the user already exists and hashes the password before saving it to the database.
 const RegisterMutation = {
   type: UserType,
   args: {
@@ -72,6 +78,89 @@ const RegisterMutation = {
     
     await user.save();
     return user;
+  },
+};
+
+// Login Mutation
+// This mutation allows a user to log in by providing an email and password.
+// It checks if the user exists, verifies the password, and generates a JWT token for authentication.
+// If 2FA is enabled, it also verifies the OTP token.
+// It also implements rate limiting to prevent brute-force attacks.
+// Rate limiting is implemented using an in-memory map to track login attempts based on the user's IP address.
+const loginAttempts = new Map(); // IP -> { count, timestamp }
+const RATE_LIMIT_MAX = process.env.LOGIN_ATTEMPTS; // x login attempts
+const RATE_LIMIT_WINDOW = process.env.LOGIN_WINDOW * 60 * 1000; // in x minutes
+const LoginMutation = {
+  type: GraphQLString,
+  args: {
+    email: { type: GraphQLString },
+    password: { type: GraphQLString },
+    token: { type: GraphQLString },
+  },
+  async resolve(_, { email, password, token }, { req }) {
+    /* RATE LIMITING */
+    const ip =
+      req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+      req.socket?.remoteAddress ||
+      req.connection?.remoteAddress ||
+      "unknown";
+    // Clean old entries
+    const now = Date.now();
+    const entry = loginAttempts.get(ip);
+    if (entry && now - entry.timestamp > RATE_LIMIT_WINDOW) {
+      loginAttempts.delete(ip);
+    }
+
+    // Rate limiting
+    const attempts = loginAttempts.get(ip) || { count: 0, timestamp: now };
+    if (attempts.count >= RATE_LIMIT_MAX) {
+      console.warn(`🚨 Rate limit exceeded for login: ${ip}`);
+      throw new Error("Login failed.");
+    }
+
+    /* LOGIN LOGIC */
+    const user = await User.findOne({ email });
+    if (!user) {
+      /* RATE LIMIT: If login fails, increase count: */
+      attempts.count++;
+      attempts.timestamp = now;
+      loginAttempts.set(ip, attempts);
+      throw new Error("Login failed.");
+    }
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      /* RATE LIMIT: If login fails, increase count: */
+      attempts.count++;
+      attempts.timestamp = now;
+      loginAttempts.set(ip, attempts);
+      throw new Error("Login failed.");
+    }
+
+    // If 2FA is enabled, require OTP
+    if (user.isTwoFAEnabled) {
+      if (!token) throw new Error("Login failed.");
+
+      const verified = speakeasy.totp.verify({
+        secret: user.twoFASecret,
+        encoding: "base32",
+        token,
+      });
+
+      if (!verified) {
+        /* RATE LIMIT: If login fails, increase count: */
+        attempts.count++;
+        attempts.timestamp = now;
+        loginAttempts.set(ip, attempts);
+        throw new Error("Login failed.");
+      }
+    }
+
+    // Generate JWT token
+    const jwtToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+    return jwtToken;
   },
 };
 
@@ -94,6 +183,7 @@ const Mutation = new GraphQLObjectType({
   fields: {
     // users
     register: RegisterMutation, // Public
+    login: LoginMutation, // Public
   },
 });
 
