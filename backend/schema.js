@@ -164,6 +164,59 @@ const LoginMutation = {
   },
 };
 
+// Setup 2FA Mutation
+// This mutation sets up 2FA for the authenticated user.
+// It generates a secret key and a QR code URL for the user to scan with their authenticator app.
+const Setup2FAMutation = {
+  type: GraphQLString,
+  args: {},
+  async resolve(_, __, context) {
+    const userId = authMiddleware(context);
+    const user = await User.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    const secret = speakeasy.generateSecret({
+      name: `ABS Blogger (${user.email})`,
+    });
+    user.twoFASecret = secret.base32;
+    await user.save();
+
+    return new Promise((resolve, reject) => {
+      QRCode.toDataURL(secret.otpauth_url, (err, data_url) => {
+        if (err) reject(err);
+        resolve(data_url);
+      });
+    });
+  },
+};
+
+// Verify and enable 2FA Mutation
+// This mutation verifies the OTP token provided by the user.
+// It checks if the token is valid and enables 2FA for the user.
+const Verify2FAMutation = {
+  type: GraphQLBoolean,
+  args: { token: { type: GraphQLString } },
+  async resolve(_, { token }, context) {
+    const userId = authMiddleware(context);
+    const user = await User.findById(userId);
+    if (!user || !user.twoFASecret)
+      throw new Error("2FA is not set up for this account");
+
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFASecret,
+      encoding: "base32",
+      token,
+    });
+
+    if (!verified) throw new Error("Invalid 2FA code");
+
+    user.isTwoFAEnabled = true;
+    await user.save();
+
+    return true;
+  },
+};
+
 
 
 
@@ -182,8 +235,10 @@ const Mutation = new GraphQLObjectType({
   name: "Mutation",
   fields: {
     // users
-    register: RegisterMutation, // Public
+    //register: RegisterMutation, // Public
     login: LoginMutation, // Public
+    //setup2FA: Setup2FAMutation, // Private
+    //verify2FA: Verify2FAMutation, // Private
   },
 });
 

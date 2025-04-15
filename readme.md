@@ -39,3 +39,26 @@ mutation Login($email: String!, $password: String!, $token: String) {
 	"token": null
 }
 ```
+
+## Set up 2FA
+(Add authorization header first -> Key: Authorization Value: Bearer jwt-token-you-get-from-login-mutation)
+### Query
+```
+mutation {
+  setup2FA
+}
+```
+
+## Verify and enable 2FA
+### Query
+```
+mutation Verify($token: String!) {
+  verify2FA(token: $token)
+}
+```
+### Query Variables
+```
+{
+  "token": "123456"
+}
+```
