@@ -1,0 +1,75 @@
+# ==== Line endings normalization ====
+
+# Automatically normalize text files to LF in repo, native EOL on checkout
+* text=auto
+
+# Force specific files to use LF
+*.sh text eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.php text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.blade.php text eol=lf
+*.env text eol=lf
+*.py text eol=lf
+*.sh text eol=lf
+*.ini text eol=lf
+
+# Force Windows-specific files to use CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# ==== Prevent diff noise for binaries ====
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.webp binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.rar binary
+*.mp4 binary
+*.mov binary
+*.mp3 binary
+*.ogg binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
+
+# ==== Improve diffs for common text formats ====
+*.md diff=markdown
+*.json diff=javascript
+*.yml diff=yaml
+*.yaml diff=yaml
+*.xml diff=xml
+*.html diff=html
+*.scss diff=css
+*.css diff=css
+*.ini diff=ini
+
+# ==== Lock-in UTF-8 encoding ====
+# CORRUPTS BINARY FILES
+#* text working-tree-encoding=UTF-8
+
+# ==== Treat shell scripts as text and make them executable ====
+*.sh text eol=lf
+*.sh executable
+
+# ==== Handle linguist overrides (GitHub language stats) ====
+*.blade.php linguist-language=HTML
+*.vue linguist-language=JavaScript
