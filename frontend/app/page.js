@@ -1,9 +1,11 @@
-import Image from "next/image";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function Home() {
   return (
-    <main className="">
-      <h1 className="">Welcome to Blogger</h1>
-    </main>
+    <ProtectedRoute>
+      <main className="p-4">
+        <h1 className="text-4xl mb-4 font-medium">Blogger</h1>
+      </main>
+    </ProtectedRoute>
   );
 }
