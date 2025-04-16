@@ -256,7 +256,7 @@ export default function SitesPage() {
             {sites.map((site) => (
               <li
                 key={site.id}
-                className="rounded p-4 shadow-lg transition duration-200 bg-pink-100"
+                className="rounded p-4 shadow-lg transition duration-200 bg-pink-100 hover:bg-pink-50"
               >
                 <h2 className="text-2xl font-medium mb-2">{site.name}</h2>
                 <div className="h-72">
