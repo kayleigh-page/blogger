@@ -15,6 +15,11 @@ const BlogPostSchema = new mongoose.Schema(
       ref: "Site",
       required: true,
     },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
     content: {
       type: String,

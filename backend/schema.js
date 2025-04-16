@@ -58,6 +58,7 @@ const BlogPostType = new GraphQLObjectType({
     title: { type: GraphQLString },
     slug: { type: GraphQLString },
     siteId: { type: GraphQLString },
+    userId: { type: GraphQLString },
     content: { type: GraphQLString },
     description: { type: GraphQLString },
     keywords: { type: GraphQLString },
@@ -121,6 +122,17 @@ const GetSiteQuery = {
     if (!site) throw new Error("Site not found");
 
     return site;
+  },
+};
+
+// Get BlogPosts for user Query
+// This query retrieves all blog posts associated with the authenticated user.
+const GetUserBlogPostsQuery = {
+  type: new GraphQLList(BlogPostType),
+  async resolve(_, __, req) {
+    const userId = authMiddleware(req);
+    const blogPosts = await BlogPost.find({ userId });
+    return blogPosts;
   },
 };
 
@@ -374,20 +386,6 @@ const AddBlogPostMutation = {
     title: { type: GraphQLString },
     slug: { type: GraphQLString },
     siteId: { type: GraphQLString },
-    content: { type: GraphQLString },
-    description: { type: GraphQLString },
-    keywords: { type: GraphQLString },
-    publishTime: { type: GraphQLString },
-    publishDate: { type: GraphQLString },
-    image: { type: GraphQLString },
-    imageCaption: { type: GraphQLString },
-    imageAbstract: { type: GraphQLString },
-    imageAlternativeHeadline: { type: GraphQLString },
-    imageKeywords: { type: GraphQLString },
-    twitterLabel1: { type: GraphQLString },
-    twitterData1: { type: GraphQLString },
-    twitterLabel2: { type: GraphQLString },
-    twitterData2: { type: GraphQLString },
   },
   async resolve(_, args, req) {
     const userId = authMiddleware(req);
@@ -419,6 +417,12 @@ const UpdateBlogPostMutation = {
     twitterData1: { type: GraphQLString },
     twitterLabel2: { type: GraphQLString },
     twitterData2: { type: GraphQLString },
+    articleSection: { type: GraphQLString },
+    articleTag1: { type: GraphQLString },
+    articleTag2: { type: GraphQLString },
+    articleTag3: { type: GraphQLString },
+    articleTag4: { type: GraphQLString },
+    articleTag5: { type: GraphQLString },
   },
   async resolve(_, args, req) {
     const userId = authMiddleware(req);
@@ -461,6 +465,7 @@ const RootQuery = new GraphQLObjectType({
     getSite: GetSiteQuery, // Private
 
     // blog posts
+    getUserBlogPosts: GetUserBlogPostsQuery, // Private
     getBlogPosts: GetBlogPostsQuery, // Public
     getBlogPost: GetBlogPostQuery, // Public
   },

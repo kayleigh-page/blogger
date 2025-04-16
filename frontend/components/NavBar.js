@@ -61,6 +61,7 @@ export default function NavBar() {
           <div className="hidden flex-grow sm:flex items-center justify-start">
             <div className="flex gap-0">
               <NavLink href="/">Home</NavLink>
+              <NavLink href="/blogposts">Blogposts</NavLink>
               <NavLink href="/sites">Sites</NavLink>
               <button
                 onClick={handleLogout}
@@ -83,6 +84,7 @@ export default function NavBar() {
                   <IoClose />
                 </Link>
                 <NavLink href="/">Home</NavLink>
+                <NavLink href="/blogposts">Blog posts</NavLink>
                 <NavLink href="/sites">Sites</NavLink>
                 <button
                   onClick={handleLogout}
