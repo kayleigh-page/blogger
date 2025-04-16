@@ -13,7 +13,6 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // The GraphQL login mutation query
     const query = `
       mutation Login($email: String!, $password: String!, $token: String) {
         login(email: $email, password: $password, token: $token)
@@ -22,7 +21,7 @@ export default function LoginPage() {
     const variables = { email, password, token: twoFAToken };
 
     try {
-      const res = await fetch("http://localhost:5001/graphql", {
+      const res = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query, variables }),
