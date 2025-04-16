@@ -1,10 +1,11 @@
 "use client";
 
-import useSWR, { mutate } from "swr";
-import React, { useEffect, useState, useRef } from "react";
+import useSWR from "swr";
+import { useState } from "react";
 import Image from "next/image";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
+
 
 export default function BlogpostsPage() {
   // States for adding a new blog post
