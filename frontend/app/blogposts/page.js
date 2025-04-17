@@ -395,6 +395,48 @@ export default function BlogpostsPage() {
     }
   };
 
+  /*
+   * DELETE A BLOG POST
+   *********************/
+  const handleDelete = async (postId) => {
+    if (!confirm("Are you sure you want to delete this blog post?")) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const query = `
+      mutation deleteBlogPost($id: String!) {
+        deleteBlogPost(id: $id)
+      }
+    `;
+      const variables = { id: postId };
+
+      const response = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({ query, variables }),
+      });
+
+      const json = await response.json();
+      if (json.errors) {
+        throw new Error(json.errors[0].message);
+      }
+
+      if (json.data.deleteBlogPost) {
+        await mutate();
+      } else {
+        alert("Failed to delete the blog post.");
+      }
+    } catch (error) {
+      console.error("Error deleting blog post:", error);
+      alert("An error occurred while deleting the blog post.");
+    }
+  };
+
   if (postsError || sitesError) return <div>Error loading data.</div>;
   if (!postsData || !sitesData) return <div>Loading...</div>;
 
