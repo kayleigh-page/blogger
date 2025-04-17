@@ -18,6 +18,7 @@ const authMiddleware = require("./middleware/auth");
 const User = require("./models/User");
 const Site = require("./models/Site");
 const BlogPost = require("./models/BlogPost");
+const PortfolioItem = require("./models/PortfolioItem");
 
 
 
@@ -60,6 +61,42 @@ const BlogPostType = new GraphQLObjectType({
     siteId: { type: GraphQLString },
     userId: { type: GraphQLString },
     content: { type: GraphQLString },
+    description: { type: GraphQLString },
+    keywords: { type: GraphQLString },
+    publishTime: { type: GraphQLString },
+    publishDate: { type: GraphQLString },
+    image: { type: GraphQLString },
+    imageCaption: { type: GraphQLString },
+    imageAbstract: { type: GraphQLString },
+    imageAlternativeHeadline: { type: GraphQLString },
+    imageKeywords: { type: GraphQLString },
+    twitterLabel1: { type: GraphQLString },
+    twitterData1: { type: GraphQLString },
+    twitterLabel2: { type: GraphQLString },
+    twitterData2: { type: GraphQLString },
+    articleSection: { type: GraphQLString },
+    articleTag1: { type: GraphQLString },
+    articleTag2: { type: GraphQLString },
+    articleTag3: { type: GraphQLString },
+    articleTag4: { type: GraphQLString },
+    articleTag5: { type: GraphQLString },
+  }),
+});
+
+// PortfolioItem Type
+const PortfolioItemType = new GraphQLObjectType({
+  name: "PortfolioItem",
+  fields: () => ({
+    id: { type: GraphQLString },
+    title: { type: GraphQLString },
+    slug: { type: GraphQLString },
+    siteId: { type: GraphQLString },
+    userId: { type: GraphQLString },
+    content: { type: GraphQLString },
+    repoLink: { type: GraphQLString },
+    demoLink: { type: GraphQLString },
+    liveLink: { type: GraphQLString },
+    infoLink: { type: GraphQLString },
     description: { type: GraphQLString },
     keywords: { type: GraphQLString },
     publishTime: { type: GraphQLString },
@@ -154,9 +191,10 @@ const GetUserBlogPostsQuery = {
 // This query retrieves all blog posts associated with a specific site ID.
 const GetBlogPostsCountQuery = {
   type: GraphQLInt,
-  async resolve(_, __, req) {
-    const userId = authMiddleware(req);
-    return await BlogPost.countDocuments({ userId });
+  args: { siteId: { type: GraphQLString } },
+  async resolve(_, {siteId}, req) {
+    //const userId = authMiddleware(req);
+    return await BlogPost.countDocuments({ siteId });
   },
 };
 const GetBlogPostsQuery = {
@@ -181,11 +219,73 @@ const GetBlogPostQuery = {
   type: BlogPostType,
   args: { id: { type: GraphQLString } },
   async resolve(_, { id }, req) {
-    //const userId = authMiddleware(req);
     const blogPost = await BlogPost.findById(id);
     if (!blogPost) throw new Error("BlogPost not found");
 
     return blogPost;
+  },
+};
+
+// Get PortfolioItems for user Query
+// This query retrieves all portfolio items associated with the authenticated user.
+const GetUserPortfolioItemsCountQuery = {
+  type: GraphQLInt,
+  async resolve(_, __, req) {
+    const userId = authMiddleware(req);
+    return await PortfolioItem.countDocuments({ userId });
+  },
+};
+const GetUserPortfolioItemsQuery = {
+  type: new GraphQLList(PortfolioItemType),
+  args: {
+    limit: { type: GraphQLInt },
+    offset: { type: GraphQLInt },
+  },
+  async resolve(_, { limit = 20, offset = 0 }, req) {
+    const userId = authMiddleware(req);
+    const portfolioItems = await PortfolioItem.find({ userId })
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .skip(offset)
+      .limit(limit);
+    return portfolioItems;
+  },
+};
+
+// Get PortfolioItems Query
+// This query retrieves all portfolio items associated with a specific site ID.
+const GetPortfolioItemsCountQuery = {
+  type: GraphQLInt,
+  args: { siteId: { type: GraphQLString } },
+  async resolve(_, { siteId }, req) {
+    return await PortfolioItem.countDocuments({ siteId});
+  },
+};
+const GetPortfolioItemsQuery = {
+  type: new GraphQLList(PortfolioItemType),
+  args: {
+    limit: { type: GraphQLInt },
+    offset: { type: GraphQLInt },
+    siteId: { type: GraphQLString },
+  },
+  async resolve(_, { limit = 20, offset = 0, siteId }, req) {
+    const portfolioItems = await PortfolioItem.find({ siteId })
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .skip(offset)
+      .limit(limit);
+    return portfolioItems;
+  },
+};
+
+// Get PortfolioItem Query
+// This query retrieves a specific portfolio item by its ID.
+const GetPortfolioItemQuery = {
+  type: PortfolioItemType,
+  args: { id: { type: GraphQLString } },
+  async resolve(_, { id }, req) {
+    const portfolioItem = await PortfolioItem.findById(id);
+    if (!portfolioItem) throw new Error("PortfolioItem not found");
+
+    return portfolioItem;
   },
 };
 
@@ -498,6 +598,13 @@ const RootQuery = new GraphQLObjectType({
     getBlogPosts: GetBlogPostsQuery, // Public
     getBlogPostsCount: GetBlogPostsCountQuery, // Public
     getBlogPost: GetBlogPostQuery, // Public
+
+    // portfolio items
+    getUserPortfolioItems: GetUserPortfolioItemsQuery, // Private
+    getUserPortfolioItemsCount: GetUserPortfolioItemsCountQuery, // Private
+    getPortfolioItems: GetPortfolioItemsQuery, // Public
+    getPortfolioItemsCount: GetPortfolioItemsCountQuery, // Public
+    getPortfolioItem: GetPortfolioItemQuery, // Public
   },
 });
 
