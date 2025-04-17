@@ -1,3 +1,10 @@
+/*
+  TODO:
+    - Image upload
+    - Delete blog post
+    - HTML content in an easier way
+    - Make post meta data collapsible in edit mode
+*/
 "use client";
 
 import useSWR from "swr";
@@ -363,8 +370,10 @@ export default function BlogpostsPage() {
           <button
             key="all"
             onClick={() => setActiveSite("All")}
-            className={`px-3 py-1 mr-2 rounded ${
-              activeSite === "All" ? "bg-blue-500 text-white" : "bg-gray-200"
+            className={`px-3 py-1 mr-2 rounded shadow-sm ${
+              activeSite === "All"
+                ? "bg-pink-500 text-white"
+                : "bg-gray-200 hover:bg-gray-300 cursor-pointer"
             }`}
           >
             All
@@ -373,10 +382,10 @@ export default function BlogpostsPage() {
             <button
               key={site.id}
               onClick={() => setActiveSite(site.id)}
-              className={`px-3 py-1 mr-2 rounded ${
+              className={`px-3 py-1 mr-2 rounded shadow-sm ${
                 activeSite === site.id
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200"
+                  ? "bg-pink-500 text-white"
+                  : "bg-gray-200 hover:bg-gray-300 cursor-pointer"
               }`}
             >
               {site.name}
@@ -387,26 +396,27 @@ export default function BlogpostsPage() {
         {/* Display Filtered Blog Posts */}
         <div className="grid grid-cols-2 gap-4">
           {filteredPosts.map((post) => (
-            <div className="flex items-center gap-2" key={post.id}>
+            <div className="flex items-center bg-pink-50 rounded-md shadow-md" key={post.id}>
               <Image
                 src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${post.image}`}
                 alt={post.imageAlternativeHeadline || "Blog post image"}
-                width={200}
-                height={100}
+                width={258}
+                height={172}
+                className="h-[172px] w-auto"
               />
-              <div>
-                <h2>{post.title}</h2>
+              <div className="p-3">
+                <h2 className="text-xl font-semibold mb-2">{post.title}</h2>
                 <p>{post.description}</p>
-                <div className="mt-0">
+                <div className="mt-2">
                   <button
                     onClick={() => handleEditClick(post)}
-                    className="mr-2 bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition duration-200 cursor-pointer"
+                    className="mr-2 bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition duration-200 cursor-pointer shadow-sm"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(post.id)}
-                    className="inline-block bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition duration-200 cursor-pointer"
+                    className="inline-block bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition duration-200 cursor-pointer shadow-sm"
                   >
                     Delete
                   </button>
@@ -715,7 +725,7 @@ export default function BlogpostsPage() {
                     id="editContent"
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
-                    className="w-full border rounded px-3 py-2"
+                    className="w-full border rounded px-3 py-2 h-[750px]"
                   />
                 </div>
 
@@ -740,8 +750,8 @@ export default function BlogpostsPage() {
         )}
 
         {/* Add blog post form */}
-        <div className="flex items-center justify-center mt-10">
-          <div className="bg-gray-50 p-6 rounded shadow-lg w-full max-w-4xl">
+        <div className="flex items-center justify-center mt-20">
+          <div className="bg-gray-50 p-8 rounded shadow-lg w-full">
             <h2 className="text-2xl font-medium mb-2 text-center">
               Add a new blog post
             </h2>
@@ -757,7 +767,7 @@ export default function BlogpostsPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
-                  className="w-full border rounded px-3 py-2 h-10"
+                  className="w-full border rounded px-3 py-2 h-10 shadow-sm"
                 />
               </div>
               <div className="w-full">
@@ -770,7 +780,7 @@ export default function BlogpostsPage() {
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   required
-                  className="w-full border rounded px-3 py-2 h-10"
+                  className="w-full border rounded px-3 py-2 h-10 shadow-sm"
                 />
               </div>
               <div className="w-full">
@@ -782,7 +792,7 @@ export default function BlogpostsPage() {
                   name="siteId"
                   value={siteId}
                   required
-                  className="w-full border rounded px-3 py-2 h-10"
+                  className="w-full border rounded px-3 py-2 h-10 shadow-sm"
                   onChange={(e) => setSiteId(e.target.value)}
                 >
                   <option value="">--Select a site--</option>
@@ -796,7 +806,7 @@ export default function BlogpostsPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-24 mt-7 bg-green-500 text-white py-2 h-10 rounded hover:bg-green-600 transition duration-200"
+                className="w-24 mt-7 bg-green-500 text-white py-2 px-4 h-10 rounded hover:bg-green-600 transition duration-200 cursor-pointer shadow-sm"
               >
                 {loading ? "Adding..." : "Add"}
               </button>
