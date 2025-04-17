@@ -10,6 +10,11 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 
 
 export default function BlogpostsPage() {
+  // States for pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPosts, setTotalPosts] = useState(0);
+  const postsPerPage = 20;
+
   // States for adding a new blog post
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -55,6 +60,7 @@ export default function BlogpostsPage() {
    * GET BLOG POSTS AND SITES
    ***************************/
   // GraphQL query to fetch the current user's blog posts.
+  /*
   const GET_BLOGPOSTS_QUERY = `
     query getUserBlogPosts {
       getUserBlogPosts {
@@ -85,7 +91,43 @@ export default function BlogpostsPage() {
       }
     }
   `;
+  */
+  const GET_BLOGPOSTS_QUERY = `
+    query getUserBlogPosts($limit: Int, $offset: Int) {
+      getUserBlogPosts(limit: $limit, offset: $offset) {
+        id
+        title
+        slug
+        siteId
+        content
+        description
+        keywords
+        publishTime
+        publishDate
+        image
+        imageCaption
+        imageAbstract
+        imageAlternativeHeadline
+        imageKeywords
+        twitterLabel1
+        twitterData1
+        twitterLabel2
+        twitterData2
+        articleSection
+        articleTag1
+        articleTag2
+        articleTag3
+        articleTag4
+        articleTag5
+      }
+    }
+  `;
 
+  const GET_BLOGPOSTS_COUNT_QUERY = `
+    query getUserBlogPostsCount {
+      getUserBlogPostsCount
+    }
+  `;
   // GraphQL query to fetch all sites for the current user.
   const GET_SITES_QUERY = `
     query getSites {
@@ -95,6 +137,26 @@ export default function BlogpostsPage() {
       }
     }
   `;
+
+  useEffect(() => {
+    const fetchTotalPosts = async () => {
+      const token = localStorage.getItem("token");
+      const response = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({ query: GET_BLOGPOSTS_COUNT_QUERY }),
+      });
+      const json = await response.json();
+      if (json.data) {
+        setTotalPosts(json.data.getUserBlogPostsCount);
+      }
+    };
+
+    fetchTotalPosts();
+  }, []);
 
   // Common fetcher function for SWR.
   const fetcher = async (query) => {
@@ -113,22 +175,49 @@ export default function BlogpostsPage() {
     }
     return json.data;
   };
-
+/*
   // Fetch blog posts.
   const {
     data: postsData,
     error: postsError,
     mutate,
   } = useSWR(GET_BLOGPOSTS_QUERY, fetcher);
-
+*/
   // Fetch sites.
   const { data: sitesData, error: sitesError } = useSWR(
     GET_SITES_QUERY,
     fetcher
   );
 
-
-
+const {
+  data: postsData,
+  error: postsError,
+  mutate,
+} = useSWR(
+  {
+    query: GET_BLOGPOSTS_QUERY,
+    variables: {
+      limit: postsPerPage,
+      offset: (currentPage - 1) * postsPerPage,
+    },
+  },
+  async ({ query, variables }) => {
+    const token = localStorage.getItem("token");
+    const response = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+      body: JSON.stringify({ query, variables }),
+    });
+    const json = await response.json();
+    if (json.errors) {
+      throw new Error(json.errors[0].message);
+    }
+    return json.data;
+  }
+);
 
   /*
    * ADD A BLOG POST
@@ -570,7 +659,6 @@ export default function BlogpostsPage() {
   return (
     <ProtectedRoute>
       <main className="p-4">
-
         {/* Tab Navigation */}
         <div className="mb-4">
           <button
@@ -633,6 +721,31 @@ export default function BlogpostsPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Pagination */}
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition duration-200 cursor-pointer"
+          >
+            Previous
+          </button>
+          <span className="mx-4">
+            Page {currentPage} of {Math.ceil(totalPosts / postsPerPage)}
+          </span>
+          <button
+            onClick={() =>
+              setCurrentPage((prev) =>
+                prev < Math.ceil(totalPosts / postsPerPage) ? prev + 1 : prev
+              )
+            }
+            disabled={currentPage === Math.ceil(totalPosts / postsPerPage)}
+            className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition duration-200 cursor-pointer"
+          >
+            Next
+          </button>
         </div>
 
         {/* Edit blog post modal */}

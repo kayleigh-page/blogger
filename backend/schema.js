@@ -127,26 +127,54 @@ const GetSiteQuery = {
 
 // Get BlogPosts for user Query
 // This query retrieves all blog posts associated with the authenticated user.
-const GetUserBlogPostsQuery = {
-  type: new GraphQLList(BlogPostType),
+const GetUserBlogPostsCountQuery = {
+  type: GraphQLInt,
   async resolve(_, __, req) {
     const userId = authMiddleware(req);
-    const blogPosts = await BlogPost.find({ userId });
+    return await BlogPost.countDocuments({ userId });
+  },
+};
+const GetUserBlogPostsQuery = {
+  type: new GraphQLList(BlogPostType),
+  args: {
+    limit: { type: GraphQLInt },
+    offset: { type: GraphQLInt },
+  },
+  async resolve(_, { limit = 20, offset = 0 }, req) {
+    const userId = authMiddleware(req);
+    const blogPosts = await BlogPost.find({ userId })
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .skip(offset)
+      .limit(limit);
     return blogPosts;
   },
 };
 
 // Get BlogPosts Query
 // This query retrieves all blog posts associated with a specific site ID.
+const GetBlogPostsCountQuery = {
+  type: GraphQLInt,
+  async resolve(_, __, req) {
+    const userId = authMiddleware(req);
+    return await BlogPost.countDocuments({ userId });
+  },
+};
 const GetBlogPostsQuery = {
   type: new GraphQLList(BlogPostType),
-  args: { siteId: { type: GraphQLString } },
-  async resolve(_, { siteId }, req) {
-    //const userId = authMiddleware(req);
-    const blogPosts = await BlogPost.find({ siteId });
+  args: {
+    limit: { type: GraphQLInt },
+    offset: { type: GraphQLInt },
+    siteId: { type: GraphQLString },
+  },
+  async resolve(_, { limit = 20, offset = 0, siteId }, req) {
+    const blogPosts = await BlogPost.find({ siteId })
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .skip(offset)
+      .limit(limit);
     return blogPosts;
   },
 };
+
 // Get BlogPost Query
 // This query retrieves a specific blog post by its ID.
 const GetBlogPostQuery = {
@@ -466,7 +494,9 @@ const RootQuery = new GraphQLObjectType({
 
     // blog posts
     getUserBlogPosts: GetUserBlogPostsQuery, // Private
+    getUserBlogPostsCount: GetUserBlogPostsCountQuery, // Private
     getBlogPosts: GetBlogPostsQuery, // Public
+    getBlogPostsCount: GetBlogPostsCountQuery, // Public
     getBlogPost: GetBlogPostQuery, // Public
   },
 });
