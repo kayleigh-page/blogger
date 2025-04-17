@@ -1,15 +1,10 @@
-/*
-  TODO:
-    - Image upload
-    - Delete blog post
-    - HTML content in an easier way
-    - Make post meta data collapsible in edit mode
-*/
 "use client";
 
 import useSWR from "swr";
-import { useState } from "react";
+import { useState,useRef, useEffect } from "react";
 import Image from "next/image";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -33,6 +28,7 @@ export default function BlogpostsPage() {
   const [editPublishTime, setEditPublishTime] = useState("");
   const [editPublishDate, setEditPublishDate] = useState("");
   const [editImage, setEditImage] = useState("");
+  const [imageFile, setImageFile] = useState(null); // Image file upload
   const [editImageCaption, setEditImageCaption] = useState("");
   const [editImageAbstract, setEditImageAbstract] = useState("");
   const [editImageAlternativeHeadline, setEditImageAlternativeHeadline] =
@@ -48,12 +44,12 @@ export default function BlogpostsPage() {
   const [editArticleTag3, setEditArticleTag3] = useState("");
   const [editArticleTag4, setEditArticleTag4] = useState("");
   const [editArticleTag5, setEditArticleTag5] = useState("");
-  // Image upload
-  const [imageFile, setImageFile] = useState(null);
-
 
   // State to keep track of the currently active site filter.
   const [activeSite, setActiveSite] = useState("All");
+
+
+
 
   /*
    * GET BLOG POSTS AND SITES
@@ -112,7 +108,6 @@ export default function BlogpostsPage() {
       body: JSON.stringify({ query }),
     });
     const json = await response.json();
-    console.log("GraphQL response: ", json);
     if (json.errors) {
       throw new Error(json.errors[0].message);
     }
@@ -125,11 +120,15 @@ export default function BlogpostsPage() {
     error: postsError,
     mutate,
   } = useSWR(GET_BLOGPOSTS_QUERY, fetcher);
+
   // Fetch sites.
   const { data: sitesData, error: sitesError } = useSWR(
     GET_SITES_QUERY,
     fetcher
   );
+
+
+
 
   /*
    * ADD A BLOG POST
@@ -180,10 +179,101 @@ export default function BlogpostsPage() {
     }
   };
 
+
+
+
   /*
    * EDIT A BLOG POST
    *******************/
-  // Handle image upload
+  // Quill editor for rich text editing
+  const quillRef = useRef(null);
+
+  // Set up the Quill editor when the component mounts or when editPost changes.
+  useEffect(() => {
+    const editorContainer = document.querySelector("#quillEditor");
+
+    // Destroy the existing Quill instance if it exists
+    if (quillRef.current) {
+      quillRef.current.off("text-change"); // Remove the event listener
+      quillRef.current = null; // Reset the reference
+    }
+
+    if (editorContainer) {
+      const quill = new Quill(editorContainer, {
+        theme: "snow",
+        modules: {
+          toolbar: {
+            container: [
+              ["bold", "italic", "underline", "strike"], // Formatting buttons
+              [{ header: [2, 3, 4, 5, 6, false] }], // Header levels
+              [{ list: "ordered" }, { list: "bullet" }], // Lists
+              ["link", "image"], // Link and image buttons
+            ],
+            handlers: {
+              image: () => handleImageUpload(quill),
+            },
+          },
+        },
+      });
+
+      quill.on("text-change", () => {
+        setEditContent(quill.root.innerHTML); // Save HTML content to state
+      });
+
+      quillRef.current = quill;
+    }
+
+    // Set the initial content for the editor
+    if (quillRef.current) {
+      quillRef.current.root.innerHTML = editContent || "<p><br></p>";
+    }
+  }, [editPost]);
+
+  // Image upload for Quill editor
+  // This function is called when the user clicks the image button in the toolbar.
+  // It opens a file input dialog, and when the user selects an image, it uploads the image to the server.
+  // After the upload is complete, it inserts the image into the Quill editor.
+  const handleImageUpload = async (quill) => {
+    const input = document.createElement("input");
+    input.setAttribute("type", "file");
+    input.setAttribute("accept", "image/*");
+    input.click();
+
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (file) {
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+          const response = await fetch(
+            process.env.NEXT_PUBLIC_IMAGE_UPLOAD_URL,
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
+
+          const data = await response.json();
+          if (response.ok) {
+            const imageUrl = `${process.env.NEXT_PUBLIC_IMAGE_URL}${data.filename}`;
+            const range = quill.getSelection();
+            quill.insertEmbed(range.index, "image", imageUrl); // Insert image into editor
+          } else {
+            console.error("Image upload failed:", data.message);
+            alert("Image upload failed.");
+          }
+        } catch (error) {
+          console.error("Error uploading image:", error);
+          alert("An error occurred while uploading the image.");
+        }
+      }
+    };
+  };
+
+  // Handle image upload for metadata image in form
+  // This function is called when the user selects an image file for the blog post.
+  // It sets the imageFile state with the selected file.
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -191,6 +281,8 @@ export default function BlogpostsPage() {
     }
   };
 
+  // Upload the image to the server and return the filename.
+  // This function is called in the handleEditSubmit function when the user submits the edit form.
   const uploadImage = async () => {
     if (!imageFile) return null;
 
@@ -217,6 +309,7 @@ export default function BlogpostsPage() {
       return null;
     }
   };
+
   // When a blog post is clicked for editing, pre-populate the form fields with the post's data.
   const handleEditClick = (post) => {
     setEditPost(post);
@@ -246,21 +339,29 @@ export default function BlogpostsPage() {
   };
 
   // Close the edit modal.
+  // This function is called when the user clicks the cancel button in the edit form.
   const handleCancelEdit = () => {
     setEditPost(null);
   };
 
   // Handle the edit form submission.
+  // This function is called when the user submits the edit form.
+  // It uploads the image (if any), and then sends a GraphQL mutation to update the blog post.
+  // After the update, it resets the form fields and refreshes the blog posts list.
   const handleEditSubmit = async (e) => {
     e.preventDefault();
 
     // Upload the image and get the filename
-    const uploadedFilename = await uploadImage();
-    if (!uploadedFilename) {
-      setLoading(false);
-      return;
+    let uploadedFilename = editImage;
+    if (imageFile) {
+      uploadedFilename = await uploadImage();
+      if (!uploadedFilename) {
+        setLoading(false);
+        return;
+      }
     }
 
+    // GraphQL mutation to update a blog post
     const UPDATE_BLOGPOST_MUTATION = `
       mutation UpdateBlogPost(
         $id: String!,
@@ -342,17 +443,17 @@ export default function BlogpostsPage() {
       }
     `;
 
+    // Prepare the variables for the mutation
     const variables = {
       id: editPost.id,
       title: editTitle,
       slug: editSlug,
       siteId: editSiteId,
-      content: editContent, // TODO LAST!
+      content: editContent,
       description: editDescription,
       keywords: editKeywords,
       publishTime: editPublishTime,
       publishDate: editPublishDate,
-      //image: editImage,
       image: uploadedFilename,
       imageCaption: editImageCaption,
       imageAbstract: editImageAbstract,
@@ -370,6 +471,7 @@ export default function BlogpostsPage() {
       articleTag5: editArticleTag5,
     };
 
+    // Send the GraphQL mutation to update the blog post
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL, {
@@ -385,7 +487,6 @@ export default function BlogpostsPage() {
       if (json.errors) {
         throw new Error(json.errors[0].message);
       } else {
-        // Reset form fields after successful submission
         setEditPost(null);
         await mutate();
       }
@@ -395,14 +496,22 @@ export default function BlogpostsPage() {
     }
   };
 
+
+
+
   /*
    * DELETE A BLOG POST
    *********************/
+  // This function is called when the user clicks the delete button for a blog post.
+  // It sends a GraphQL mutation to delete the blog post.
+  // After deletion, it refreshes the blog posts list.
   const handleDelete = async (postId) => {
+    // Confirm deletion
     if (!confirm("Are you sure you want to delete this blog post?")) {
       return;
     }
-
+    
+    // GraphQL mutation to delete a blog post
     try {
       const token = localStorage.getItem("token");
       const query = `
@@ -437,6 +546,15 @@ export default function BlogpostsPage() {
     }
   };
 
+
+
+
+  /*
+   * RENDERING
+   ************/
+  // Check for errors and loading states
+  // If there's an error fetching the blog posts or sites, display an error message.
+  // If the data is still loading, display a loading message.
   if (postsError || sitesError) return <div>Error loading data.</div>;
   if (!postsData || !sitesData) return <div>Loading...</div>;
 
@@ -452,6 +570,7 @@ export default function BlogpostsPage() {
   return (
     <ProtectedRoute>
       <main className="p-4">
+
         {/* Tab Navigation */}
         <div className="mb-4">
           <button
@@ -623,15 +742,6 @@ export default function BlogpostsPage() {
                     <label htmlFor="editImage" className="block mb-1">
                       Image
                     </label>
-                    {/*
-                    <input
-                      type="text"
-                      id="editImage"
-                      value={editImage}
-                      onChange={(e) => setEditImage(e.target.value)}
-                      className="w-full border rounded px-3 py-2"
-                    />
-                    */}
                     <input
                       type="file"
                       id="imageUpload"
@@ -819,13 +929,10 @@ export default function BlogpostsPage() {
                   <label htmlFor="editContent" className="block mb-1">
                     Content
                   </label>
-                  <textarea
-                    type="text"
-                    id="editContent"
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    className="w-full border rounded px-3 py-2 h-[750px]"
-                  />
+                  <div
+                    id="quillEditor"
+                    className="w-full border rounded h-[750px]"
+                  ></div>
                 </div>
 
                 <div className="flex justify-end">

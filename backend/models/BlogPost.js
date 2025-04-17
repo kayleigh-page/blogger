@@ -23,7 +23,7 @@ const BlogPostSchema = new mongoose.Schema(
 
     content: {
       type: String,
-      default: "",
+      default: "<p>Edit your post here.</p>",
     },
 
     description: {
@@ -44,7 +44,7 @@ const BlogPostSchema = new mongoose.Schema(
     },
     image: {
       type: String,
-      default: "",
+      default: "default-sitepic.jpg",
     },
     imageCaption: {
       type: String,
