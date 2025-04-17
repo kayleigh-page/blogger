@@ -48,6 +48,9 @@ export default function BlogpostsPage() {
   const [editArticleTag3, setEditArticleTag3] = useState("");
   const [editArticleTag4, setEditArticleTag4] = useState("");
   const [editArticleTag5, setEditArticleTag5] = useState("");
+  // Image upload
+  const [imageFile, setImageFile] = useState(null);
+
 
   // State to keep track of the currently active site filter.
   const [activeSite, setActiveSite] = useState("All");
@@ -180,6 +183,40 @@ export default function BlogpostsPage() {
   /*
    * EDIT A BLOG POST
    *******************/
+  // Handle image upload
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+    }
+  };
+
+  const uploadImage = async () => {
+    if (!imageFile) return null;
+
+    const formData = new FormData();
+    formData.append("image", imageFile);
+
+    try {
+      const response = await fetch(process.env.NEXT_PUBLIC_IMAGE_UPLOAD_URL, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        return data.filename; // Assuming the backend returns the filename
+      } else {
+        console.error("Image upload failed:", data.message);
+        alert("Image upload failed.");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("An error occurred while uploading the image.");
+      return null;
+    }
+  };
   // When a blog post is clicked for editing, pre-populate the form fields with the post's data.
   const handleEditClick = (post) => {
     setEditPost(post);
@@ -216,6 +253,13 @@ export default function BlogpostsPage() {
   // Handle the edit form submission.
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+
+    // Upload the image and get the filename
+    const uploadedFilename = await uploadImage();
+    if (!uploadedFilename) {
+      setLoading(false);
+      return;
+    }
 
     const UPDATE_BLOGPOST_MUTATION = `
       mutation UpdateBlogPost(
@@ -308,7 +352,8 @@ export default function BlogpostsPage() {
       keywords: editKeywords,
       publishTime: editPublishTime,
       publishDate: editPublishDate,
-      image: editImage,
+      //image: editImage,
+      image: uploadedFilename,
       imageCaption: editImageCaption,
       imageAbstract: editImageAbstract,
       imageAlternativeHeadline: editImageAlternativeHeadline,
@@ -396,7 +441,10 @@ export default function BlogpostsPage() {
         {/* Display Filtered Blog Posts */}
         <div className="grid grid-cols-2 gap-4">
           {filteredPosts.map((post) => (
-            <div className="flex items-center bg-pink-50 rounded-md shadow-md" key={post.id}>
+            <div
+              className="flex items-center bg-pink-50 rounded-md shadow-md"
+              key={post.id}
+            >
               <Image
                 src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${post.image}`}
                 alt={post.imageAlternativeHeadline || "Blog post image"}
@@ -533,11 +581,20 @@ export default function BlogpostsPage() {
                     <label htmlFor="editImage" className="block mb-1">
                       Image
                     </label>
+                    {/*
                     <input
                       type="text"
                       id="editImage"
                       value={editImage}
                       onChange={(e) => setEditImage(e.target.value)}
+                      className="w-full border rounded px-3 py-2"
+                    />
+                    */}
+                    <input
+                      type="file"
+                      id="imageUpload"
+                      accept="image/*"
+                      onChange={(e) => handleImageChange(e)}
                       className="w-full border rounded px-3 py-2"
                     />
                   </div>

@@ -15,6 +15,7 @@ const storage = multer.diskStorage({
   filename: function (req, file, cb) {
     const uniqueName = Date.now() + "-" + file.originalname;
     cb(null, uniqueName);
+    //cb(null, file.originalname);
   },
 });
 
@@ -29,10 +30,11 @@ router.post("/uploadImage", upload.single("image"), (req, res) => {
   const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
 
   return res.status(200).json({
-    success: 1,
+    /*success: 1,
     file: {
       url: fileUrl,
-    },
+    },*/
+    filename: req.file.filename,
   });
 });
 
