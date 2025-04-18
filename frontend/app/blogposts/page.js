@@ -704,7 +704,8 @@ const {
               key={post.id}
             >
               <Image
-                src={`${imageBaseUrl}${post.image}`}
+                {/*src={`${imageBaseUrl}${post.image}`}*/}
+                src={`https://api.blogger.abs.gd/uploads/${post.image}`}
                 alt={post.imageAlternativeHeadline || "Blog post image"}
                 width={258}
                 height={172}
