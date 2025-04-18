@@ -5,7 +5,6 @@ import Image from "next/image";
 //import Quill from "quill";
 //import "quill/dist/quill.snow.css";
 let Quill;
-const imageBaseUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -722,11 +721,9 @@ export default function PortfolioItemsPage() {
               className="flex items-center bg-pink-50 rounded-md shadow-md"
               key={post.id}
             >
-              <Image
-                src={`${imageBaseUrl}${post.image}`}
+              <img
+                src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${post.image}`}
                 alt={post.imageAlternativeHeadline || "Blog post image"}
-                width={258}
-                height={172}
                 className="h-[172px] w-auto"
               />
               <div className="p-3">
