@@ -19,6 +19,7 @@ const User = require("./models/User");
 const Site = require("./models/Site");
 const BlogPost = require("./models/BlogPost");
 const PortfolioItem = require("./models/PortfolioItem");
+const NewsletterSubscriber = require("./models/NewsletterSubscriber");
 
 
 
@@ -116,6 +117,18 @@ const PortfolioItemType = new GraphQLObjectType({
     articleTag3: { type: GraphQLString },
     articleTag4: { type: GraphQLString },
     articleTag5: { type: GraphQLString },
+  }),
+});
+
+// NewsletterSubscriber Type
+const NewsletterSubscriberType = new GraphQLObjectType({
+  name: "NewsletterSubscriber",
+  fields: () => ({
+    id: { type: GraphQLString },
+    email: { type: GraphQLString },
+    siteId: { type: GraphQLString },
+    userId: { type: GraphQLString },
+    comment: { type: GraphQLString },
   }),
 });
 
@@ -286,6 +299,71 @@ const GetPortfolioItemQuery = {
     if (!portfolioItem) throw new Error("PortfolioItem not found");
 
     return portfolioItem;
+  },
+};
+
+// Get NewsletterSubscribers Query
+// This query retrieves all newsletter subscribers associated with a specific site ID.
+const GetNewsletterSubscribersCountQuery = {
+  type: GraphQLInt,
+  args: { siteId: { type: GraphQLString } },
+  async resolve(_, { siteId }, req) {
+    authMiddleware(req);
+    return await NewsletterSubscriber.countDocuments({ siteId });
+  },
+};
+const GetNewsletterSubscribersQuery = {
+  type: new GraphQLList(NewsletterSubscriberType),
+  args: {
+    limit: { type: GraphQLInt },
+    offset: { type: GraphQLInt },
+    siteId: { type: GraphQLString },
+  },
+  async resolve(_, { limit = 20, offset = 0, siteId }, req) {
+    authMiddleware(req);
+    const newsletterSubscribers = await NewsletterSubscriber.find({ siteId })
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .skip(offset)
+      .limit(limit);
+    return newsletterSubscribers;
+  },
+};
+
+// Get NewsletterSubscribers for user Query
+// This query retrieves all newsletter subscribers associated with the authenticated user.
+const GetUserNewsletterSubscribersCountQuery = {
+  type: GraphQLInt,
+  async resolve(_, __, req) {
+    const userId = authMiddleware(req);
+    return await NewsletterSubscriber.countDocuments({ userId });
+  },
+};
+const GetUserNewsletterSubscribersQuery = {
+  type: new GraphQLList(NewsletterSubscriberType),
+  args: {
+    limit: { type: GraphQLInt },
+    offset: { type: GraphQLInt },
+  },
+  async resolve(_, { limit = 20, offset = 0 }, req) {
+    const userId = authMiddleware(req);
+    const newsletterSubscribers = await NewsletterSubscriber.find({ userId })
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .skip(offset)
+      .limit(limit);
+    return newsletterSubscribers;
+  },
+};
+// Get NewsletterSubscriber Query
+// This query retrieves a specific newsletter subscriber by its ID.
+const GetNewsletterSubscriberQuery = {
+  type: NewsletterSubscriberType,
+  args: { id: { type: GraphQLString } },
+  async resolve(_, { id }, req) {
+    authMiddleware(req);
+    const newsletterSubscriber = await NewsletterSubscriber.findById(id);
+    if (!newsletterSubscriber)
+      throw new Error("NewsletterSubscriber not found");
+    return newsletterSubscriber;
   },
 };
 
@@ -650,6 +728,74 @@ const DeletePortfolioItemMutation = {
   },
 };
 
+// AddAuthenticatedNewsletterSubscriber Mutation
+// This mutation adds a new newsletter subscriber for the authenticated user.
+const AddAuthenticatedNewsletterSubscriberMutation = {
+  type: NewsletterSubscriberType,
+  args: {
+    email: { type: GraphQLString },
+    siteId: { type: GraphQLString },
+    comment: { type: GraphQLString },
+  },
+  async resolve(_, args, req) {
+    const userId = authMiddleware(req);
+    const newsletterSubscriber = new NewsletterSubscriber({ ...args, userId });
+    await newsletterSubscriber.save();
+    return newsletterSubscriber;
+  },
+};
+// AddNewsletterSubscriber Mutation
+// This mutation adds a new newsletter subscriber without authentication.
+// It is used for public sign-ups.
+const AddNewsletterSubscriberMutation = {
+  type: NewsletterSubscriberType,
+  args: {
+    email: { type: GraphQLString },
+    siteId: { type: GraphQLString },
+    userId: { type: GraphQLString },
+    comment: { type: GraphQLString },
+  },
+  async resolve(_, args, req) {
+    const newsletterSubscriber = new NewsletterSubscriber({ ...args });
+    await newsletterSubscriber.save();
+    return newsletterSubscriber;
+  },
+};
+// Update NewsletterSubscriber Mutation
+// This mutation updates an existing newsletter subscriber for the authenticated user.
+const UpdateNewsletterSubscriberMutation = {
+  type: NewsletterSubscriberType,
+  args: {
+    id: { type: GraphQLString },
+    email: { type: GraphQLString },
+    siteId: { type: GraphQLString },
+    comment: { type: GraphQLString },
+  },
+  async resolve(_, args, req) {
+    const userId = authMiddleware(req);
+    const newsletterSubscriber = await NewsletterSubscriber.findOneAndUpdate(
+      { _id: args.id, userId },
+      args,
+      { new: true }
+    );
+    if (!newsletterSubscriber) throw new Error("NewsletterSubscriber not found");
+    return newsletterSubscriber;
+  },
+};
+// Delete NewsletterSubscriber Mutation
+// This mutation deletes a newsletter subscriber for the authenticated user.
+const DeleteNewsletterSubscriberMutation = {
+  type: GraphQLBoolean,
+  args: { id: { type: GraphQLString } },
+  async resolve(_, { id }, req) {
+    const userId = authMiddleware(req);
+    const newsletterSubscriber = await NewsletterSubscriber.findOneAndDelete({ _id: id, userId });
+    if (!newsletterSubscriber) throw new Error("NewsletterSubscriber not found");
+    return true;
+  },
+};
+
+
 
 
 
@@ -679,6 +825,13 @@ const RootQuery = new GraphQLObjectType({
     getPortfolioItems: GetPortfolioItemsQuery, // Public
     getPortfolioItemsCount: GetPortfolioItemsCountQuery, // Public
     getPortfolioItem: GetPortfolioItemQuery, // Public
+
+    // newsletter subscribers
+    getNewsletterSubscribers: GetNewsletterSubscribersQuery, // Private
+    getNewsletterSubscribersCount: GetNewsletterSubscribersCountQuery, // Private
+    getUserNewsletterSubscribers: GetUserNewsletterSubscribersQuery, // Private
+    getUserNewsletterSubscribersCount: GetUserNewsletterSubscribersCountQuery, // Private
+    getNewsletterSubscriber: GetNewsletterSubscriberQuery, // Private
   },
 });
 
@@ -705,6 +858,12 @@ const Mutation = new GraphQLObjectType({
     addPortfolioItem: AddPortfolioItemMutation, // Private
     updatePortfolioItem: UpdatePortfolioItemMutation, // Private
     deletePortfolioItem: DeletePortfolioItemMutation, // Private
+
+    // newsletter subscribers
+    addNewsletterSubscriber: AddNewsletterSubscriberMutation, // Public
+    addAuthenticatedNewsletterSubscriber: AddAuthenticatedNewsletterSubscriberMutation, // Private
+    updateNewsletterSubscriber: UpdateNewsletterSubscriberMutation, // Private
+    deleteNewsletterSubscriber: DeleteNewsletterSubscriberMutation, // Private
   },
 });
 
