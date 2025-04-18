@@ -703,11 +703,9 @@ const {
               className="flex items-center bg-pink-50 rounded-md shadow-md"
               key={post.id}
             >
-              <Image
-                src={`https://api.blogger.abs.gd/uploads/${post.image}`}
+              <img
+                src={`${imageBaseUrl}${post.image}`}
                 alt={post.imageAlternativeHeadline || "Blog post image"}
-                width={258}
-                height={172}
                 className="h-[172px] w-auto"
               />
               <div className="p-3">
