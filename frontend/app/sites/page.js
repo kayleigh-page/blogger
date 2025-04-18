@@ -6,6 +6,8 @@ import Image from "next/image";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+const imageBaseUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
+
 export default function SitesPage() {
   // states for adding a new site
   const [name, setName] = useState("");
@@ -264,7 +266,7 @@ export default function SitesPage() {
                     <Image
                       width={500}
                       height={300}
-                      src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${site.picture}`}
+                      src={`${imageBaseUrl}${site.picture}`}
                       alt={site.name}
                       className="mb-2"
                     />

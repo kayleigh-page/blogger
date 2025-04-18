@@ -5,6 +5,7 @@ import Image from "next/image";
 //import Quill from "quill";
 //import "quill/dist/quill.snow.css";
 let Quill;
+const imageBaseUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -327,7 +328,7 @@ export default function PortfolioItemsPage() {
 
     setupQuill();
   }, [editPost]);
-  
+
   // Image upload for Quill editor
   // This function is called when the user clicks the image button in the toolbar.
   // It opens a file input dialog, and when the user selects an image, it uploads the image to the server.
@@ -722,7 +723,7 @@ export default function PortfolioItemsPage() {
               key={post.id}
             >
               <Image
-                src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${post.image}`}
+                src={`${imageBaseUrl}${post.image}`}
                 alt={post.imageAlternativeHeadline || "Blog post image"}
                 width={258}
                 height={172}

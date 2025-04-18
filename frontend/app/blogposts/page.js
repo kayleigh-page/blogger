@@ -9,6 +9,8 @@ let Quill;
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+const imageBaseUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
+
 
 export default function BlogpostsPage() {
   // States for pagination
@@ -702,7 +704,7 @@ const {
               key={post.id}
             >
               <Image
-                src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${post.image}`}
+                src={`${imageBaseUrl}${post.image}`}
                 alt={post.imageAlternativeHeadline || "Blog post image"}
                 width={258}
                 height={172}
