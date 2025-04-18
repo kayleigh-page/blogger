@@ -14,7 +14,7 @@ const nextConfig = {
         pathname: "/**",
       },
       {
-        protocol: "http",
+        protocol: "https",
         hostname: "api.blogger.abs.gd",
         port: "443",
         pathname: "/**",

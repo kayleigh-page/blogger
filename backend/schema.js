@@ -576,6 +576,80 @@ const DeleteBlogPostMutation = {
   },
 };
 
+// Add PortfolioItem Mutation
+// This mutation adds a new portfolio item for the authenticated user.
+const AddPortfolioItemMutation = {
+  type: PortfolioItemType,
+  args: {
+    title: { type: GraphQLString },
+    slug: { type: GraphQLString },
+    siteId: { type: GraphQLString },
+  },
+  async resolve(_, args, req) {
+    const userId = authMiddleware(req);
+    const portfolioItem = new PortfolioItem({ ...args, userId });
+    await portfolioItem.save();
+    return portfolioItem;
+  },
+};
+// Update PortfolioItem Mutation
+// This mutation updates an existing portfolio item for the authenticated user.
+const UpdatePortfolioItemMutation = {
+  type: PortfolioItemType,
+  args: {
+    id: { type: GraphQLString },
+    title: { type: GraphQLString },
+    slug: { type: GraphQLString },
+    siteId: { type: GraphQLString },
+    content: { type: GraphQLString },
+    repoLink: { type: GraphQLString },
+    demoLink: { type: GraphQLString },
+    liveLink: { type: GraphQLString },
+    infoLink: { type: GraphQLString },
+    description: { type: GraphQLString },
+    keywords: { type: GraphQLString },
+    publishTime: { type: GraphQLString },
+    publishDate: { type: GraphQLString },
+    image: { type: GraphQLString },
+    imageCaption: { type: GraphQLString },
+    imageAbstract: { type: GraphQLString },
+    imageAlternativeHeadline: { type: GraphQLString },
+    imageKeywords: { type: GraphQLString },
+    twitterLabel1: { type: GraphQLString },
+    twitterData1: { type: GraphQLString },
+    twitterLabel2: { type: GraphQLString },
+    twitterData2: { type: GraphQLString },
+    articleSection: { type: GraphQLString },
+    articleTag1: { type: GraphQLString },
+    articleTag2: { type: GraphQLString },
+    articleTag3: { type: GraphQLString },
+    articleTag4: { type: GraphQLString },
+    articleTag5: { type: GraphQLString },
+  },
+  async resolve(_, args, req) {
+    const userId = authMiddleware(req);
+    const portfolioItem = await PortfolioItem.findOneAndUpdate(
+      { _id: args.id, userId },
+      args,
+      { new: true }
+    );
+    if (!portfolioItem) throw new Error("PortfolioItem not found");
+    return portfolioItem;
+  },
+};
+// Delete PortfolioItem Mutation
+// This mutation deletes a portfolio item for the authenticated user.
+const DeletePortfolioItemMutation = {
+  type: GraphQLBoolean,
+  args: { id: { type: GraphQLString } },
+  async resolve(_, { id }, req) {
+    const userId = authMiddleware(req);
+    const portfolioItem = await PortfolioItem.findOneAndDelete({ _id: id, userId });
+    if (!portfolioItem) throw new Error("PortfolioItem not found");
+    return true;
+  },
+};
+
 
 
 
@@ -626,6 +700,11 @@ const Mutation = new GraphQLObjectType({
     addBlogPost: AddBlogPostMutation, // Private
     updateBlogPost: UpdateBlogPostMutation, // Private
     deleteBlogPost: DeleteBlogPostMutation, // Private
+
+    // portfolio items
+    addPortfolioItem: AddPortfolioItemMutation, // Private
+    updatePortfolioItem: UpdatePortfolioItemMutation, // Private
+    deletePortfolioItem: DeletePortfolioItemMutation, // Private
   },
 });
 
