@@ -1,33 +1,35 @@
 "use client";
-
+import { useState, useEffect, useRef } from "react";
 import useSWR from "swr";
-import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Quill from "quill";
 import "quill/dist/quill.snow.css";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 
-
-export default function BlogpostsPage() {
+export default function PortfolioItemsPage() {
   // States for pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPosts, setTotalPosts] = useState(0);
   const postsPerPage = 20;
 
-  // States for adding a new blog post
+  // States for adding a new portfolio item
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [siteId, setSiteId] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // States for editing a blog post
+  // States for editing a portfolio item
   const [editPost, setEditPost] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editSlug, setEditSlug] = useState("");
   const [editSiteId, setEditSiteId] = useState("");
   const [editContent, setEditContent] = useState("");
+  const [editRepoLink, setEditRepoLink] = useState("");
+  const [editDemoLink, setEditDemoLink] = useState("");
+  const [editLiveLink, setEditLiveLink] = useState("");
+  const [editInfoLink, setEditInfoLink] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editKeywords, setEditKeywords] = useState("");
   const [editPublishTime, setEditPublishTime] = useState("");
@@ -43,6 +45,7 @@ export default function BlogpostsPage() {
   const [editTwitterData1, setEditTwitterData1] = useState("");
   const [editTwitterLabel2, setEditTwitterLabel2] = useState("");
   const [editTwitterData2, setEditTwitterData2] = useState("");
+  //GetPortfolioItemsCount;
   const [editArticleSection, setEditArticleSection] = useState("");
   const [editArticleTag1, setEditArticleTag1] = useState("");
   const [editArticleTag2, setEditArticleTag2] = useState("");
@@ -53,21 +56,22 @@ export default function BlogpostsPage() {
   // State to keep track of the currently active site filter.
   const [activeSite, setActiveSite] = useState("All");
 
-
-
-
   /*
-   * GET BLOG POSTS AND SITES
-   ***************************/
-  // GraphQL query to fetch the current user's blog posts.
-  const GET_BLOGPOSTS_QUERY = `
-    query getUserBlogPosts($limit: Int, $offset: Int) {
-      getUserBlogPosts(limit: $limit, offset: $offset) {
+   * GET PORTFOLIO ITEMS AND SITES
+   ********************************/
+  // GraphQL query to fetch portfolio items for the current user
+  const GET_PORTFOLIO_ITEMS_QUERY = `
+    query getUserPortfolioItems($limit: Int, $offset: Int) {
+      getUserPortfolioItems(limit: $limit, offset: $offset) {
         id
         title
         slug
         siteId
         content
+        repoLink
+        demoLink
+        liveLink
+        infoLink
         description
         keywords
         publishTime
@@ -90,13 +94,13 @@ export default function BlogpostsPage() {
       }
     }
   `;
-  // GraphQL query to fetch the count of blog posts for the current user.
-  const GET_BLOGPOSTS_COUNT_QUERY = `
-    query getUserBlogPostsCount {
-      getUserBlogPostsCount
+  // GraphQL query to fetch the count of portfolio items for the current user
+  const GET_PORTFOLIO_ITEMS_COUNT_QUERY = `
+    query getUserPortfolioItemsCount {
+      getUserPortfolioItemsCount
     }
   `;
-  // GraphQL query to fetch all sites for the current user.
+  // GraphQL query to fetch all sites for the current user
   const GET_SITES_QUERY = `
     query getSites {
       getSites {
@@ -106,7 +110,7 @@ export default function BlogpostsPage() {
     }
   `;
 
-  // Fetch the total number of blog posts for pagination.
+  // Fetch the total number of portfolio items for pagination
   useEffect(() => {
     const fetchTotalPosts = async () => {
       const token = localStorage.getItem("token");
@@ -116,16 +120,15 @@ export default function BlogpostsPage() {
           "Content-Type": "application/json",
           Authorization: token ? `Bearer ${token}` : "",
         },
-        body: JSON.stringify({ query: GET_BLOGPOSTS_COUNT_QUERY }),
+        body: JSON.stringify({ query: GET_PORTFOLIO_ITEMS_COUNT_QUERY }),
       });
       const json = await response.json();
       if (json.data) {
-        setTotalPosts(json.data.getUserBlogPostsCount);
+        setTotalPosts(json.data.getUserPortfolioItemsCount);
       }
     };
-
     fetchTotalPosts();
-  }, [GET_BLOGPOSTS_COUNT_QUERY]);
+  }, [GET_PORTFOLIO_ITEMS_COUNT_QUERY]);
 
   // Common fetcher function for SWR.
   const fetcher = async (query) => {
@@ -151,54 +154,54 @@ export default function BlogpostsPage() {
     fetcher
   );
 
-const {
-  data: postsData,
-  error: postsError,
-  mutate,
-} = useSWR(
-  {
-    query: GET_BLOGPOSTS_QUERY,
-    variables: {
-      limit: postsPerPage,
-      offset: (currentPage - 1) * postsPerPage,
-    },
-  },
-  async ({ query, variables }) => {
-    const token = localStorage.getItem("token");
-    const response = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
+  const {
+    data: postsData,
+    error: postsError,
+    mutate,
+  } = useSWR(
+    {
+      query: GET_PORTFOLIO_ITEMS_QUERY,
+      variables: {
+        limit: postsPerPage,
+        offset: (currentPage - 1) * postsPerPage,
       },
-      body: JSON.stringify({ query, variables }),
-    });
-    const json = await response.json();
-    if (json.errors) {
-      throw new Error(json.errors[0].message);
+    },
+    async ({ query, variables }) => {
+      const token = localStorage.getItem("token");
+      const response = await fetch(process.env.NEXT_PUBLIC_GRAPHQL_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({ query, variables }),
+      });
+      const json = await response.json();
+      if (json.errors) {
+        throw new Error(json.errors[0].message);
+      }
+      return json.data;
     }
-    return json.data;
-  }
-);
+  );
 
   /*
-   * ADD A BLOG POST
-   ******************/
-  // GraphQL mutation to add a new blog post.
+   * ADD A PORTFOLIO ITEM
+   ***********************/
+  // GraphQL mutation to add a new portfolio item.
   // This function is called when the form is submitted.
   const handleAddPost = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     const query = `
-      mutation addBlogPost($title: String!, $slug: String!, $siteId: String!) {
-        addBlogPost(title: $title, slug: $slug, siteId: $siteId) {
-          id
-          title
-          slug
-        }
+    mutation addPortfolioItem($title: String!, $slug: String!, $siteId: String!) {
+      addPortfolioItem(title: $title, slug: $slug, siteId: $siteId) {
+        id
+        title
+        slug
       }
-    `;
+    }
+  `;
     const variables = { title, slug, siteId };
 
     try {
@@ -230,12 +233,9 @@ const {
     }
   };
 
-
-
-
   /*
-   * EDIT A BLOG POST
-   *******************/
+   * EDIT A PORTFOLIO ITEM
+   ************************/
   // Quill editor for rich text editing
   const quillRef = useRef(null);
 
@@ -323,7 +323,7 @@ const {
   };
 
   // Handle image upload for metadata image in form
-  // This function is called when the user selects an image file for the blog post.
+  // This function is called when the user selects an image file for the portfolio item.
   // It sets the imageFile state with the selected file.
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -361,13 +361,17 @@ const {
     }
   };
 
-  // When a blog post is clicked for editing, pre-populate the form fields with the post's data.
+  // When a portfolio item is clicked for editing, pre-populate the form fields with the post's data.
   const handleEditClick = (post) => {
     setEditPost(post);
     setEditTitle(post.title || "");
     setEditSlug(post.slug || "");
     setEditSiteId(post.siteId || "");
     setEditContent(post.content || "");
+    setEditRepoLink(post.repoLink || "");
+    setEditDemoLink(post.demoLink || "");
+    setEditLiveLink(post.liveLink || "");
+    setEditInfoLink(post.infoLink || "");
     setEditDescription(post.description || "");
     setEditKeywords(post.keywords || "");
     setEditPublishTime(post.publishTime || "");
@@ -397,8 +401,8 @@ const {
 
   // Handle the edit form submission.
   // This function is called when the user submits the edit form.
-  // It uploads the image (if any), and then sends a GraphQL mutation to update the blog post.
-  // After the update, it resets the form fields and refreshes the blog posts list.
+  // It uploads the image (if any), and then sends a GraphQL mutation to update the portfolio item.
+  // After the update, it resets the form fields and refreshes the portfolio items list.
   const handleEditSubmit = async (e) => {
     e.preventDefault();
 
@@ -412,14 +416,18 @@ const {
       }
     }
 
-    // GraphQL mutation to update a blog post
-    const UPDATE_BLOGPOST_MUTATION = `
-      mutation updateBlogPost(
+    // GraphQL mutation to update a portfolio item
+    const UPDATE_PORTFOLIO_ITEM_MUTATION = `
+      mutation updatePortfolioItem(
         $id: String!,
         $title: String!,
         $slug: String!,
         $siteId: String!,
         $content: String,
+        $repoLink: String,
+        $demoLink: String,
+        $liveLink: String,
+        $infoLink: String,
         $description: String,
         $keywords: String,
         $publishTime: String,
@@ -440,12 +448,16 @@ const {
         $articleTag4: String,
         $articleTag5: String
       ) {
-        updateBlogPost(
+        updatePortfolioItem(
           id: $id,
           title: $title,
           slug: $slug,
           siteId: $siteId,
           content: $content,
+          repoLink: $repoLink,
+          demoLink: $demoLink,
+          liveLink: $liveLink,
+          infoLink: $infoLink,
           description: $description,
           keywords: $keywords,
           publishTime: $publishTime,
@@ -471,6 +483,10 @@ const {
           slug
           siteId
           content
+          repoLink
+          demoLink
+          liveLink
+          infoLink
           description
           keywords
           publishTime
@@ -501,6 +517,10 @@ const {
       slug: editSlug,
       siteId: editSiteId,
       content: editContent,
+      repoLink: editRepoLink,
+      demoLink: editDemoLink,
+      liveLink: editLiveLink,
+      infoLink: editInfoLink,
       description: editDescription,
       keywords: editKeywords,
       publishTime: editPublishTime,
@@ -531,7 +551,10 @@ const {
           "Content-Type": "application/json",
           Authorization: token ? `Bearer ${token}` : "",
         },
-        body: JSON.stringify({ query: UPDATE_BLOGPOST_MUTATION, variables }),
+        body: JSON.stringify({
+          query: UPDATE_PORTFOLIO_ITEM_MUTATION,
+          variables,
+        }),
       });
 
       const json = await response.json();
@@ -542,32 +565,29 @@ const {
         await mutate();
       }
     } catch (error) {
-      console.error("Error updating blog post:", error);
-      alert("An error occurred while updating the blog post.");
+      console.error("Error updating portfolio item:", error);
+      alert("An error occurred while updating the portfolio item.");
     }
   };
 
-
-
-
   /*
-   * DELETE A BLOG POST
-   *********************/
-  // This function is called when the user clicks the delete button for a blog post.
-  // It sends a GraphQL mutation to delete the blog post.
-  // After deletion, it refreshes the blog posts list.
+   * DELETE A PORTFOLIO ITEM
+   **************************/
+  // This function is called when the user clicks the delete button for a portfolio item.
+  // It sends a GraphQL mutation to delete the portfolio item.
+  // After deletion, it refreshes the portfolio items list.
   const handleDelete = async (postId) => {
     // Confirm deletion
-    if (!confirm("Are you sure you want to delete this blog post?")) {
+    if (!confirm("Are you sure you want to delete this portfolio item?")) {
       return;
     }
-    
-    // GraphQL mutation to delete a blog post
+
+    // GraphQL mutation to delete a portfolio item
     try {
       const token = localStorage.getItem("token");
       const query = `
-      mutation deleteBlogPost($id: String!) {
-        deleteBlogPost(id: $id)
+      mutation deletePortfolioItem($id: String!) {
+        deletePortfolioItem(id: $id)
       }
     `;
       const variables = { id: postId };
@@ -586,19 +606,16 @@ const {
         throw new Error(json.errors[0].message);
       }
 
-      if (json.data.deleteBlogPost) {
+      if (json.data.deletePortfolioItem) {
         await mutate();
       } else {
-        alert("Failed to delete the blog post.");
+        alert("Failed to delete the portfolio item.");
       }
     } catch (error) {
-      console.error("Error deleting blog post:", error);
-      alert("An error occurred while deleting the blog post.");
+      console.error("Error deleting portfolio item:", error);
+      alert("An error occurred while deleting the portfolio item.");
     }
   };
-
-
-
 
   /*
    * RENDERING
@@ -609,15 +626,15 @@ const {
   if (postsError || sitesError) return <div>Error loading data.</div>;
   if (!postsData || !sitesData) return <div>Loading...</div>;
 
-  const blogPosts = postsData.getUserBlogPosts || [];
+  const portfolioItems = postsData.getUserPortfolioItems || [];
   const sites = sitesData.getSites || [];
 
-  // Filter blog posts by the currently active site filter.
+  // Filter portfolio items by the currently active site filter.
   const filteredPosts =
     activeSite === "All"
-      ? blogPosts
-      : blogPosts.filter((post) => post.siteId === activeSite);
-
+      ? portfolioItems
+      : portfolioItems.filter((item) => item.siteId === activeSite);
+  
   return (
     <ProtectedRoute>
       <main className="p-4">
@@ -784,6 +801,55 @@ const {
                       id="editPublishTime"
                       value={editPublishTime}
                       onChange={(e) => setEditPublishTime(e.target.value)}
+                      className="w-full border rounded px-3 py-2"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="editRepoLink" className="block mb-1">
+                      Repo Link
+                    </label>
+                    <input
+                      type="text"
+                      id="editRepoLink"
+                      value={editRepoLink}
+                      onChange={(e) => setEditRepoLink(e.target.value)}
+                      className="w-full border rounded px-3 py-2"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="editDemoLink" className="block mb-1">
+                      Demo Link
+                    </label>
+                    <input
+                      type="text"
+                      id="editDemoLink"
+                      value={editDemoLink}
+                      onChange={(e) => setEditDemoLink(e.target.value)}
+                      className="w-full border rounded px-3 py-2"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="editLiveLink" className="block mb-1">
+                      Live Link
+                    </label>
+                    <input
+                      type="text"
+                      id="editLiveLink"
+                      value={editLiveLink}
+                      onChange={(e) => setEditLiveLink(e.target.value)}
+                      className="w-full border rounded px-3 py-2"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label htmlFor="editInfoLaink" className="block mb-1">
+                      Info Link
+                    </label>
+                    <input
+                      type="text"
+                      id="editInfoLink"
+                      value={editInfoLink}
+                      onChange={(e) => setEditInfoLink(e.target.value)}
                       className="w-full border rounded px-3 py-2"
                     />
                   </div>
@@ -1030,11 +1096,11 @@ const {
           </div>
         )}
 
-        {/* Add blog post form */}
+        {/* Add portfolio item form */}
         <div className="flex items-center justify-center mt-20">
           <div className="bg-gray-50 p-8 rounded shadow-lg w-full">
             <h2 className="text-2xl font-medium mb-2 text-center">
-              Add a new blog post
+              Add a new portfolio item
             </h2>
             {error && <p className="text-red-500 mb-4">{error}</p>}
             <form onSubmit={handleAddPost} className="flex gap-4">

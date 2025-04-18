@@ -62,6 +62,7 @@ export default function NavBar() {
             <div className="flex gap-0">
               <NavLink href="/">Home</NavLink>
               <NavLink href="/blogposts">Blogposts</NavLink>
+              <NavLink href="/portfolioitems">Portfolioitems</NavLink>
               <NavLink href="/sites">Sites</NavLink>
               <button
                 onClick={handleLogout}
@@ -85,6 +86,7 @@ export default function NavBar() {
                 </Link>
                 <NavLink href="/">Home</NavLink>
                 <NavLink href="/blogposts">Blog posts</NavLink>
+                <NavLink href="/portfolioitems">Portfolio items</NavLink>
                 <NavLink href="/sites">Sites</NavLink>
                 <button
                   onClick={handleLogout}
