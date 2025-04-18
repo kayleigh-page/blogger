@@ -1,5 +1,16 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import nextPWA from "next-pwa";
+
+const isDev = process.env.NODE_ENV === "development";
+
+const withPWA = nextPWA({
+  dest: "public",
+  disable: isDev, // Disable PWA in development
+  register: true,
+  skipWaiting: true,
+  buildExcludes: [/middleware-manifest\.json$/, /dynamic-css-manifest\.json$/],
+});
+
+const nextConfig = withPWA({
   reactStrictMode: true,
   swcMinify: true,
   experimental: {
@@ -42,6 +53,6 @@ const nextConfig = {
       },
     ];
   },
-};
+});
 
 export default nextConfig;

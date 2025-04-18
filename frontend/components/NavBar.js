@@ -63,6 +63,7 @@ export default function NavBar() {
               <NavLink href="/">Home</NavLink>
               <NavLink href="/blogposts">Blogposts</NavLink>
               <NavLink href="/portfolioitems">Portfolioitems</NavLink>
+              <NavLink href="/newslettersubscribers">Subscribers</NavLink>
               <NavLink href="/sites">Sites</NavLink>
               <button
                 onClick={handleLogout}
@@ -87,6 +88,7 @@ export default function NavBar() {
                 <NavLink href="/">Home</NavLink>
                 <NavLink href="/blogposts">Blog posts</NavLink>
                 <NavLink href="/portfolioitems">Portfolio items</NavLink>
+                <NavLink href="/newslettersubscribers">Subscribers</NavLink>
                 <NavLink href="/sites">Sites</NavLink>
                 <button
                   onClick={handleLogout}

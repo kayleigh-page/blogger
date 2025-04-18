@@ -1,0 +1,53 @@
+{
+  "short_name": "Blogger",
+  "name": "Blogger",
+  "icons": [
+    {
+      "src": "/logo/blogger-3-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/logo/blogger-3-256.png",
+      "type": "image/png",
+      "sizes": "256x256"
+    },
+    {
+      "src": "/logo/blogger-3-180.png",
+      "type": "image/png",
+      "sizes": "180x180"
+    },
+    {
+      "src": "/logo/blogger-3-128.png",
+      "type": "image/png",
+      "sizes": "128x128"
+    },
+    {
+      "src": "/logo/blogger-3-96.png",
+      "type": "image/png",
+      "sizes": "96x96"
+    },
+    {
+      "src": "/logo/blogger-3-72.png",
+      "type": "image/png",
+      "sizes": "72x72"
+    },
+    {
+      "src": "/logo/blogger-3-48.png",
+      "type": "image/png",
+      "sizes": "48x48"
+    },
+    {
+      "src": "/logo/blogger-3-32.png",
+      "type": "image/png",
+      "sizes": "32x32"
+    }
+  ],
+  "id": "/",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "scope": "/",
+  "description": "Backend for my blogs, portfolios and newsletter subscription."
+}

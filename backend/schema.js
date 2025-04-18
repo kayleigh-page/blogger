@@ -735,7 +735,6 @@ const AddAuthenticatedNewsletterSubscriberMutation = {
   args: {
     email: { type: GraphQLString },
     siteId: { type: GraphQLString },
-    comment: { type: GraphQLString },
   },
   async resolve(_, args, req) {
     const userId = authMiddleware(req);
@@ -753,7 +752,6 @@ const AddNewsletterSubscriberMutation = {
     email: { type: GraphQLString },
     siteId: { type: GraphQLString },
     userId: { type: GraphQLString },
-    comment: { type: GraphQLString },
   },
   async resolve(_, args, req) {
     const newsletterSubscriber = new NewsletterSubscriber({ ...args });

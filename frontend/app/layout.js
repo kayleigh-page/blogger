@@ -15,15 +15,26 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Blogger",
+  robots: "noindex, nofollow",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+  appleWebApp: {
+    title: "Blogger",
+    statusBarStyle: "default",
+    capable: true,
+  },
+  icons: {
+    icon: "/favicon.ico", // optional favicon
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/logo/manifest.json",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
-        <title>{metadata.title}</title>
-        <meta name="robots" content="noindex, nofollow" />
-      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <NavBar />
         {children}
