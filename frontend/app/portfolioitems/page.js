@@ -2,8 +2,9 @@
 import { useState, useEffect, useRef } from "react";
 import useSWR from "swr";
 import Image from "next/image";
-import Quill from "quill";
-import "quill/dist/quill.snow.css";
+//import Quill from "quill";
+//import "quill/dist/quill.snow.css";
+let Quill;
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -241,7 +242,7 @@ export default function PortfolioItemsPage() {
    ************************/
   // Quill editor for rich text editing
   const quillRef = useRef(null);
-
+/*
   // Set up the Quill editor when the component mounts or when editPost changes.
   useEffect(() => {
     const editorContainer = document.querySelector("#quillEditor");
@@ -282,7 +283,51 @@ export default function PortfolioItemsPage() {
       quillRef.current.root.innerHTML = editContent || "<p><br></p>";
     }
   }, [editPost]);
+*/
+  useEffect(() => {
+    const setupQuill = async () => {
+      const QuillModule = (await import("quill")).default;
+      await import("quill/dist/quill.snow.css");
 
+      const editorContainer = document.querySelector("#quillEditor");
+
+      if (quillRef.current) {
+        quillRef.current.off("text-change");
+        quillRef.current = null;
+      }
+
+      if (editorContainer) {
+        const quill = new QuillModule(editorContainer, {
+          theme: "snow",
+          modules: {
+            toolbar: {
+              container: [
+                ["bold", "italic", "underline", "strike"],
+                [{ header: [2, 3, 4, 5, 6, false] }],
+                [{ list: "ordered" }, { list: "bullet" }],
+                ["link", "image"],
+              ],
+              handlers: {
+                image: () => handleImageUpload(quill),
+              },
+            },
+          },
+        });
+
+        quill.on("text-change", () => {
+          setEditContent(quill.root.innerHTML);
+        });
+
+        quillRef.current = quill;
+        if (editContent) {
+          quill.root.innerHTML = editContent;
+        }
+      }
+    };
+
+    setupQuill();
+  }, [editPost]);
+  
   // Image upload for Quill editor
   // This function is called when the user clicks the image button in the toolbar.
   // It opens a file input dialog, and when the user selects an image, it uploads the image to the server.

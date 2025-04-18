@@ -16,10 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Blogger",
   robots: "noindex, nofollow",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
-  ],
   appleWebApp: {
     title: "Blogger",
     statusBarStyle: "default",
@@ -30,6 +26,15 @@ export const metadata = {
     apple: "/apple-touch-icon.png",
   },
   manifest: "/logo/manifest.json",
+};
+
+export const viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }) {
