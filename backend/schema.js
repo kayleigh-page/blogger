@@ -239,6 +239,19 @@ const GetBlogPostQuery = {
   },
 };
 
+// Get BlogPost by slug Query
+// This query retrieves a specific blog post by its slug.
+const GetBlogPostBySlugQuery = {
+  type: BlogPostType,
+  args: { slug: { type: GraphQLString } },
+  async resolve(_, { slug }, req) {
+    const blogPost = await BlogPost.findOne({ slug });
+    if (!blogPost) throw new Error("BlogPost not found");
+
+    return blogPost;
+  },
+};
+
 // Get PortfolioItems for user Query
 // This query retrieves all portfolio items associated with the authenticated user.
 const GetUserPortfolioItemsCountQuery = {
@@ -816,6 +829,7 @@ const RootQuery = new GraphQLObjectType({
     getBlogPosts: GetBlogPostsQuery, // Public
     getBlogPostsCount: GetBlogPostsCountQuery, // Public
     getBlogPost: GetBlogPostQuery, // Public
+    getBlogPostBySlug: GetBlogPostBySlugQuery, // Public
 
     // portfolio items
     getUserPortfolioItems: GetUserPortfolioItemsQuery, // Private
